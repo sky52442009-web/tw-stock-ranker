@@ -1,0 +1,48 @@
+lookback_calendar_days: 130
+top_n: 30
+min_history_days: 45
+
+# 研究報告建議先排除低流動性樣本。若資金規模較小，可調降到 100000000。
+min_20d_avg_turnover: 200000000
+
+http_timeout_seconds: 30
+request_sleep_seconds: 0.12
+
+# 避免只抓到上市或只抓到上櫃時，仍產生偏掉的全市場排行。
+require_complete_market_data: true
+expected_markets:
+  - twse
+  - tpex
+min_rows_by_market:
+  twse: 900
+  tpex: 700
+
+favored_industries:
+  - 半導體業
+  - 電子零組件業
+  - 電腦及週邊設備業
+  - 其他電子業
+  - 通信網路業
+  - 光電業
+
+weights:
+  liquidity: 14
+  volume_breakout: 16
+  relative_strength: 12
+  close_strength: 12
+  trend_quality: 13
+  macd: 9
+  rsi: 8
+  breakout_after_base: 9
+  industry: 7
+
+risk_penalties:
+  near_limit_up: 9
+  long_upper_shadow: 8
+  very_hot_rsi: 6
+  close_below_vwap: 5
+  low_liquidity: 14
+  extreme_gap: 4
+  optional_daytrade_crowded: 8
+  optional_margin_hot: 6
+  optional_attention: 100

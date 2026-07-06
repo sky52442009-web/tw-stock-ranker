@@ -6,7 +6,10 @@ min_history_days: 45
 min_20d_avg_turnover: 200000000
 
 http_timeout_seconds: 30
+http_retries: 2
+http_retry_sleep_seconds: 1.5
 request_sleep_seconds: 0.12
+fetch_workers: 4
 skip_weekends: true
 
 # 避免只抓到上市或只抓到上櫃時，仍產生偏掉的全市場排行。

@@ -8,6 +8,7 @@ import sys
 import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +24,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "min_history_days": 45,
     "min_20d_avg_turnover": 200_000_000,
     "http_timeout_seconds": 30,
+    "http_retries": 2,
+    "http_retry_sleep_seconds": 1.5,
     "request_sleep_seconds": 0.12,
+    "fetch_workers": 4,
     "skip_weekends": True,
     "require_complete_market_data": True,
     "expected_markets": ["twse", "tpex"],
@@ -170,15 +174,24 @@ def date_range(start: date, end: date) -> list[date]:
     return days
 
 
-def request_json(url: str, params: dict[str, Any], timeout: int) -> Any:
+def request_json(url: str, params: dict[str, Any], timeout: int, retries: int = 2, retry_sleep: float = 1.5) -> Any:
     headers = {
         "User-Agent": "tw-nextday-ranker/1.0 (+local research tool)",
         "Accept": "application/json,text/plain,*/*",
     }
-    response = requests.get(url, params=params, headers=headers, timeout=timeout)
-    response.raise_for_status()
-    text = response.content.decode("utf-8-sig", errors="replace")
-    return json.loads(text)
+    last_exc: Exception | None = None
+    for attempt in range(retries + 1):
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=timeout)
+            response.raise_for_status()
+            text = response.content.decode("utf-8-sig", errors="replace")
+            return json.loads(text)
+        except Exception as exc:  # noqa: BLE001 - retry network/API/transient JSON failures.
+            last_exc = exc
+            if attempt >= retries:
+                break
+            time.sleep(retry_sleep * (attempt + 1))
+    raise RuntimeError(f"request failed after {retries + 1} attempts: {url} params={params}") from last_exc
 
 
 def fetch_twse_daily(day: date, cfg: dict[str, Any]) -> pd.DataFrame:
@@ -190,6 +203,8 @@ def fetch_twse_daily(day: date, cfg: dict[str, Any]) -> pd.DataFrame:
             "response": "json",
         },
         int(cfg["http_timeout_seconds"]),
+        int(cfg.get("http_retries", 2)),
+        float(cfg.get("http_retry_sleep_seconds", 1.5)),
     )
     tables = payload.get("tables") or []
     target = None
@@ -234,6 +249,8 @@ def fetch_tpex_daily(day: date, cfg: dict[str, Any]) -> pd.DataFrame:
             "response": "json",
         },
         int(cfg["http_timeout_seconds"]),
+        int(cfg.get("http_retries", 2)),
+        float(cfg.get("http_retry_sleep_seconds", 1.5)),
     )
     tables = payload.get("tables") or []
     target = None
@@ -379,15 +396,37 @@ def load_price_history(
     no_network: bool,
 ) -> FetchResult:
     start_day = end_day - timedelta(days=lookback_days)
-    frames = []
-    source_dates = []
-    for day in date_range(start_day, end_day):
-        if bool(cfg.get("skip_weekends", True)) and day.weekday() >= 5:
-            continue
-        frame = load_or_fetch_daily(day, cache_dir, cfg, refresh, no_network)
-        if not frame.empty:
-            frames.append(frame)
-            source_dates.append(day.strftime("%Y-%m-%d"))
+    days = [
+        day
+        for day in date_range(start_day, end_day)
+        if not (bool(cfg.get("skip_weekends", True)) and day.weekday() >= 5)
+    ]
+    frames_by_day: dict[date, pd.DataFrame] = {}
+
+    workers = max(1, int(cfg.get("fetch_workers", 1)))
+    if workers > 1 and not no_network and len(days) > 1:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(load_or_fetch_daily, day, cache_dir, cfg, refresh, no_network): day
+                for day in days
+            }
+            for future in as_completed(futures):
+                day = futures[future]
+                try:
+                    frame = future.result()
+                except Exception as exc:  # noqa: BLE001 - preserve run progress while reporting the day.
+                    print(f"[warn] {day} 讀取失敗，已略過：{exc}", file=sys.stderr)
+                    continue
+                if not frame.empty:
+                    frames_by_day[day] = frame
+    else:
+        for day in days:
+            frame = load_or_fetch_daily(day, cache_dir, cfg, refresh, no_network)
+            if not frame.empty:
+                frames_by_day[day] = frame
+
+    frames = [frames_by_day[day] for day in sorted(frames_by_day)]
+    source_dates = [day.strftime("%Y-%m-%d") for day in sorted(frames_by_day)]
     if not frames:
         raise DataFetchError("沒有可用日資料。請確認網路連線、日期，或先建立快取。")
     df = pd.concat(frames, ignore_index=True)
@@ -406,6 +445,8 @@ def load_stock_info(cache_dir: Path, cfg: dict[str, Any], no_network: bool, refr
         FINMIND_STOCK_INFO_URL,
         {"dataset": "TaiwanStockInfo"},
         int(cfg["http_timeout_seconds"]),
+        int(cfg.get("http_retries", 2)),
+        float(cfg.get("http_retry_sleep_seconds", 1.5)),
     )
     data = payload.get("data") or []
     if not data:

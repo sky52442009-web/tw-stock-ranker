@@ -24,6 +24,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "min_20d_avg_turnover": 200_000_000,
     "http_timeout_seconds": 30,
     "request_sleep_seconds": 0.12,
+    "skip_weekends": True,
     "require_complete_market_data": True,
     "expected_markets": ["twse", "tpex"],
     "min_rows_by_market": {
@@ -381,6 +382,8 @@ def load_price_history(
     frames = []
     source_dates = []
     for day in date_range(start_day, end_day):
+        if bool(cfg.get("skip_weekends", True)) and day.weekday() >= 5:
+            continue
         frame = load_or_fetch_daily(day, cache_dir, cfg, refresh, no_network)
         if not frame.empty:
             frames.append(frame)

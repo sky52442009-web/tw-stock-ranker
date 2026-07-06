@@ -7,6 +7,7 @@ min_20d_avg_turnover: 200000000
 
 http_timeout_seconds: 30
 request_sleep_seconds: 0.12
+skip_weekends: true
 
 # 避免只抓到上市或只抓到上櫃時，仍產生偏掉的全市場排行。
 require_complete_market_data: true

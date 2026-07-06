@@ -26,6 +26,8 @@ git push -u origin main
 https://YOUR_NAME.github.io/tw-stock-ranker/
 ```
 
+本專案已包含 GitHub Actions workflow；推送到 `main` 後會自動部署一次，之後也會在平日台灣時間 19:10 排程更新。
+
 ## 方案 B：Cloudflare Pages
 
 如果你有 Cloudflare 帳號：

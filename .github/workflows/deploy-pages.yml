@@ -31,9 +31,11 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
+        if: github.event_name != 'push'
         run: pip install -r requirements.txt
 
       - name: Restore market data cache
+        if: github.event_name != 'push'
         uses: actions/cache@v4
         with:
           path: data/cache
@@ -42,9 +44,11 @@ jobs:
             tw-stock-cache-${{ runner.os }}-
 
       - name: Build latest ranking
+        if: github.event_name != 'push'
         run: python tw_stock_ranker.py --lookback-days 110 --top 100 --output-dir outputs --cache-dir data/cache
 
       - name: Build static site
+        if: github.event_name != 'push'
         run: python build_static_site.py --limit 100 --site-dir site
 
       - name: Configure Pages

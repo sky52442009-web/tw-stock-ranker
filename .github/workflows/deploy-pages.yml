@@ -1,6 +1,9 @@
 name: Deploy Taiwan Stock Ranker
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
   schedule:
     # 19:10 Asia/Taipei on weekdays, after Taiwan market post-close data is usually available.

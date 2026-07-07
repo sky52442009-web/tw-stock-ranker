@@ -162,7 +162,7 @@ def clean_number(value: Any) -> float:
 
 def is_common_stock_id(stock_id: Any) -> bool:
     text = str(stock_id).strip()
-    return bool(re.fullmatch(r"\d{4}", text))
+    return bool(re.fullmatch(r"\d{4}", text)) and not text.startswith("00")
 
 
 def date_range(start: date, end: date) -> list[date]:
@@ -347,6 +347,7 @@ def load_or_fetch_daily(day: date, cache_dir: Path, cfg: dict[str, Any], refresh
     had_invalid_cache = False
     if path.exists() and not refresh:
         cached = pd.read_csv(path, dtype={"stock_id": str}, parse_dates=["date"])
+        cached = cached[cached["stock_id"].map(is_common_stock_id)].copy()
         if has_complete_market_data(cached, cfg):
             return cached
         had_invalid_cache = True

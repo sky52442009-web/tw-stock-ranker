@@ -1,6 +1,7 @@
 {
   "ok": true,
-  "latest_csv": "tw_nextday_rank_20260706.csv",
-  "report_date": "2026-07-06",
-  "built_at": "2026-07-07T00:51:05"
+  "latest_csv": "tw_nextday_rank_20260707.csv",
+  "report_date": "2026-07-07",
+  "target_date": "2026-07-08",
+  "built_at": "2026-07-07T21:14:02"
 }

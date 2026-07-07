@@ -53,9 +53,21 @@ def esc(value: object) -> str:
     return html.escape("" if value is None else str(value))
 
 
+def next_business_day(value: str) -> str:
+    current = datetime.strptime(value, "%Y-%m-%d").date()
+    nxt = current
+    while True:
+        from datetime import timedelta
+
+        nxt = nxt + timedelta(days=1)
+        if nxt.weekday() < 5:
+            return nxt.isoformat()
+
+
 def render_static_index(csv_path: Path, limit: int) -> str:
     rows = load_rows(csv_path, limit)
     report_date = report_date_from_path(csv_path)
+    target_date = next_business_day(report_date)
     updated = datetime.fromtimestamp(csv_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
 
     table_rows: list[str] = []
@@ -83,6 +95,7 @@ def render_static_index(csv_path: Path, limit: int) -> str:
       <div>
         <p class="eyebrow">Taiwan Stock Next-Day Long Watchlist</p>
         <h1>台股隔日上漲候選排行</h1>
+        <p class="subtitle">以 {esc(report_date)} 盤後資料，預測 {esc(target_date)} 的偏多觀察名單。</p>
       </div>
       <nav>
         <a href="download.csv">下載 CSV</a>
@@ -93,9 +106,9 @@ def render_static_index(csv_path: Path, limit: int) -> str:
 
     <section class="summary">
       <div><span>資料日</span><strong>{esc(report_date)}</strong></div>
+      <div><span>預測目標</span><strong>{esc(target_date)}</strong></div>
       <div><span>顯示檔數</span><strong>{len(rows)}</strong></div>
       <div><span>最後建置</span><strong>{esc(updated)}</strong></div>
-      <div><span>部署型態</span><strong>Static</strong></div>
     </section>
 
     <main>
@@ -125,7 +138,7 @@ def render_static_index(csv_path: Path, limit: int) -> str:
     </main>
     """
     page = html_page("台股隔日上漲候選排行", body)
-    return page.replace("form {", ".small { color: var(--muted); margin: 0; }\n    form {")
+    return page.replace("form {", ".subtitle, .small { color: var(--muted); margin: 8px 0 0; line-height: 1.6; }\n    form {")
 
 
 def build_site(site_dir: Path, limit: int) -> tuple[Path, str]:
@@ -148,6 +161,7 @@ def build_site(site_dir: Path, limit: int) -> tuple[Path, str]:
         "ok": True,
         "latest_csv": csv_path.name,
         "report_date": report_date,
+        "target_date": next_business_day(report_date),
         "built_at": datetime.now().isoformat(timespec="seconds"),
     }
     (site_dir / "health.json").write_text(json.dumps(health, ensure_ascii=False, indent=2), encoding="utf-8")

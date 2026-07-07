@@ -8,6 +8,8 @@ on:
   schedule:
     # 19:10 Asia/Taipei on weekdays, after Taiwan market post-close data is usually available.
     - cron: "10 11 * * 1-5"
+    # Backup run at 21:30 Asia/Taipei in case the first scheduled run is delayed or skipped.
+    - cron: "30 13 * * 1-5"
 
 permissions:
   contents: read

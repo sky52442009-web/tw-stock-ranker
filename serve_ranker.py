@@ -253,12 +253,71 @@ def html_page(title: str, body: str) -> str:
     main {{
       padding: 24px clamp(16px, 4vw, 48px) 44px;
     }}
+    .insight-panel {{
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.35fr);
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }}
+    .subtitle, .small {{
+      color: var(--muted);
+      margin: 8px 0 0;
+      line-height: 1.6;
+    }}
+    .mini-stats {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }}
+    .mini-stat {{
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f9fafb;
+    }}
+    .mini-stat span {{
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }}
+    .mini-stat strong {{
+      font-size: 22px;
+      line-height: 1.1;
+    }}
+    .mini-stat.good {{
+      background: #ecfdf5;
+      border-color: #99f6e4;
+    }}
+    .mini-stat.watch {{
+      background: #fffbeb;
+      border-color: #fde68a;
+    }}
     .table-head {{
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: end;
       gap: 16px;
       margin-bottom: 12px;
+    }}
+    .tools {{
+      display: flex;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }}
+    .search {{
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
     }}
     form {{ display: flex; gap: 8px; align-items: center; color: var(--muted); }}
     input {{
@@ -268,6 +327,27 @@ def html_page(title: str, body: str) -> str:
       border-radius: 8px;
       font: inherit;
       margin-left: 6px;
+    }}
+    input[type="search"] {{
+      width: min(280px, 70vw);
+      margin-left: 0;
+      background: #fff;
+    }}
+    .chips {{
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }}
+    .chip {{
+      background: #fff;
+      color: #374151;
+      border-color: var(--line);
+      padding: 8px 10px;
+    }}
+    .chip.active {{
+      color: #065f46;
+      background: #d1fae5;
+      border-color: #5eead4;
     }}
     .table-wrap {{
       overflow-x: auto;
@@ -292,7 +372,11 @@ def html_page(title: str, body: str) -> str:
       color: #374151;
       font-size: 12px;
       text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      z-index: 1;
     }}
+    tbody tr:hover {{ background: #f8fafc; }}
     tr:last-child td {{ border-bottom: 0; }}
     td span {{ display: block; color: var(--muted); margin-top: 2px; }}
     .rank, .num {{ text-align: right; white-space: nowrap; }}
@@ -313,17 +397,57 @@ def html_page(title: str, body: str) -> str:
       line-height: 1.7;
     }}
     .empty {{ max-width: 760px; margin: 80px auto; line-height: 1.8; }}
+    .empty-state {{
+      margin: 0;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+    }}
     code {{ background: #e5e7eb; padding: 2px 6px; border-radius: 6px; }}
     @media (max-width: 760px) {{
       .topbar {{ display: block; }}
       nav {{ margin-top: 18px; }}
       .summary {{ grid-template-columns: 1fr 1fr; }}
+      .insight-panel {{ grid-template-columns: 1fr; }}
+      .mini-stats {{ grid-template-columns: 1fr 1fr; }}
       .table-head {{ align-items: stretch; flex-direction: column; }}
+      .tools {{ justify-content: flex-start; }}
     }}
   </style>
 </head>
 <body>
 {body}
+<script>
+(() => {{
+  const search = document.getElementById('searchBox');
+  const rows = Array.from(document.querySelectorAll('tbody tr[data-signal]'));
+  const chips = Array.from(document.querySelectorAll('.chip[data-filter]'));
+  const empty = document.getElementById('emptyState');
+  let activeFilter = 'all';
+
+  function applyFilters() {{
+    const query = (search?.value || '').trim().toLowerCase();
+    let shown = 0;
+    rows.forEach((row) => {{
+      const signalOk = activeFilter === 'all' || row.dataset.signal === activeFilter;
+      const textOk = !query || (row.dataset.search || '').includes(query);
+      const visible = signalOk && textOk;
+      row.hidden = !visible;
+      if (visible) shown += 1;
+    }});
+    if (empty) empty.hidden = shown !== 0;
+  }}
+
+  search?.addEventListener('input', applyFilters);
+  chips.forEach((chip) => {{
+    chip.addEventListener('click', () => {{
+      activeFilter = chip.dataset.filter || 'all';
+      chips.forEach((item) => item.classList.toggle('active', item === chip));
+      applyFilters();
+    }});
+  }});
+}})();
+</script>
 </body>
 </html>"""
 

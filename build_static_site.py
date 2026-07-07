@@ -69,6 +69,23 @@ def render_static_index(csv_path: Path, limit: int) -> str:
     report_date = report_date_from_path(csv_path)
     target_date = next_business_day(report_date)
     updated = datetime.fromtimestamp(csv_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+    signal_counts: dict[str, int] = {}
+    for row in rows:
+        signal = row.get("signal", "") or "未分類"
+        signal_counts[signal] = signal_counts.get(signal, 0) + 1
+    top_score = parse_float(rows[0].get("long_score")) if rows else None
+
+    def stat(label: str, value: object, tone: str = "") -> str:
+        return f"<div class='mini-stat {tone}'><span>{esc(label)}</span><strong>{esc(value)}</strong></div>"
+
+    stats = "".join(
+        [
+            stat("最高分", "" if top_score is None else f"{top_score:.2f}", "good"),
+            stat("偏多", signal_counts.get("偏多", 0), "good"),
+            stat("觀察偏多", signal_counts.get("觀察偏多", 0), "watch"),
+            stat("中性觀察", signal_counts.get("中性觀察", 0), ""),
+        ]
+    )
 
     table_rows: list[str] = []
     for row in rows:
@@ -76,8 +93,17 @@ def render_static_index(csv_path: Path, limit: int) -> str:
         signal_class = "bull" if signal == "偏多" else "watch" if "觀察" in signal else "neutral"
         score = parse_float(row.get("long_score"))
         close = parse_float(row.get("close"))
+        search_blob = " ".join(
+            [
+                row.get("stock_id", ""),
+                row.get("name", ""),
+                row.get("industry_category", "") or "",
+                signal,
+                row.get("reasons", "") or "",
+            ]
+        ).lower()
         table_rows.append(
-            "<tr>"
+            f"<tr data-signal='{esc(signal)}' data-search='{esc(search_blob)}'>"
             f"<td class='rank'>{esc(row.get('rank', ''))}</td>"
             f"<td><strong>{esc(row.get('stock_id', ''))}</strong><span>{esc(row.get('name', ''))}</span></td>"
             f"<td>{esc(row.get('industry_category', '') or '')}</td>"
@@ -112,9 +138,28 @@ def render_static_index(csv_path: Path, limit: int) -> str:
     </section>
 
     <main>
+      <section class="insight-panel">
+        <div>
+          <h2>盤後摘要</h2>
+          <p class="small">分數越高代表隔日偏多觀察優先度越高；仍需搭配隔日開盤、VWAP、流動性與風控確認。</p>
+        </div>
+        <div class="mini-stats">{stats}</div>
+      </section>
+
       <div class="table-head">
         <h2>候選清單</h2>
-        <p class="small">永久託管版。資料由排程或手動部署更新。</p>
+        <div class="tools" aria-label="排行篩選工具">
+          <label class="search">
+            <span>搜尋</span>
+            <input id="searchBox" type="search" placeholder="代號、名稱、產業" autocomplete="off" />
+          </label>
+          <div class="chips" role="group" aria-label="訊號篩選">
+            <button class="chip active" type="button" data-filter="all">全部</button>
+            <button class="chip" type="button" data-filter="偏多">偏多</button>
+            <button class="chip" type="button" data-filter="觀察偏多">觀察偏多</button>
+            <button class="chip" type="button" data-filter="中性觀察">中性觀察</button>
+          </div>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
@@ -133,12 +178,12 @@ def render_static_index(csv_path: Path, limit: int) -> str:
           </thead>
           <tbody>{''.join(table_rows)}</tbody>
         </table>
+        <p id="emptyState" class="empty-state" hidden>沒有符合篩選條件的股票。</p>
       </div>
       <p class="note">這是量化候選排行，不是投資建議。實盤前請確認重大訊息、注意/處置、可當沖資格、券源、流動性與停損規則。</p>
     </main>
     """
-    page = html_page("台股隔日上漲候選排行", body)
-    return page.replace("form {", ".subtitle, .small { color: var(--muted); margin: 8px 0 0; line-height: 1.6; }\n    form {")
+    return html_page("台股隔日上漲候選排行", body)
 
 
 def build_site(site_dir: Path, limit: int) -> tuple[Path, str]:

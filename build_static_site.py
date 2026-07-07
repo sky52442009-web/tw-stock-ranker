@@ -108,7 +108,7 @@ def render_static_index(csv_path: Path, limit: int) -> str:
       <div><span>資料日</span><strong>{esc(report_date)}</strong></div>
       <div><span>預測目標</span><strong>{esc(target_date)}</strong></div>
       <div><span>顯示檔數</span><strong>{len(rows)}</strong></div>
-      <div><span>最後建置</span><strong>{esc(updated)}</strong></div>
+      <div><span>自動更新</span><strong>平日盤後</strong></div>
     </section>
 
     <main>
@@ -163,6 +163,7 @@ def build_site(site_dir: Path, limit: int) -> tuple[Path, str]:
         "report_date": report_date,
         "target_date": next_business_day(report_date),
         "built_at": datetime.now().isoformat(timespec="seconds"),
+        "auto_update": "GitHub Actions weekdays at 19:10, 20:10, 21:30, 22:30 Asia/Taipei",
     }
     (site_dir / "health.json").write_text(json.dumps(health, ensure_ascii=False, indent=2), encoding="utf-8")
 

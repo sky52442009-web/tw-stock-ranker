@@ -8,8 +8,12 @@ on:
   schedule:
     # 19:10 Asia/Taipei on weekdays, after Taiwan market post-close data is usually available.
     - cron: "10 11 * * 1-5"
+    # Extra retry at 20:10 Asia/Taipei.
+    - cron: "10 12 * * 1-5"
     # Backup run at 21:30 Asia/Taipei in case the first scheduled run is delayed or skipped.
     - cron: "30 13 * * 1-5"
+    # Final backup at 22:30 Asia/Taipei.
+    - cron: "30 14 * * 1-5"
 
 permissions:
   contents: read
@@ -33,12 +37,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Resolve Taiwan date
+        run: echo "TPE_DATE=$(TZ=Asia/Taipei date +%F)" >> "$GITHUB_ENV"
+
       - name: Install dependencies
-        if: github.event_name != 'push'
         run: pip install -r requirements.txt
 
       - name: Restore market data cache
-        if: github.event_name != 'push'
         uses: actions/cache@v4
         with:
           path: data/cache
@@ -47,12 +52,13 @@ jobs:
             tw-stock-cache-${{ runner.os }}-
 
       - name: Build latest ranking
-        if: github.event_name != 'push'
-        run: python tw_stock_ranker.py --lookback-days 110 --top 100 --output-dir outputs --cache-dir data/cache
+        run: python tw_stock_ranker.py --end-date "$TPE_DATE" --lookback-days 110 --top 100 --output-dir outputs --cache-dir data/cache
 
       - name: Build static site
-        if: github.event_name != 'push'
         run: python build_static_site.py --limit 100 --site-dir site
+
+      - name: Show generated health
+        run: cat site/health.json
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

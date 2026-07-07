@@ -349,6 +349,16 @@ def html_page(title: str, body: str) -> str:
       background: #d1fae5;
       border-color: #5eead4;
     }}
+    .clear-search {{
+      color: #374151;
+      background: #fff;
+      border-color: var(--line);
+      padding: 8px 10px;
+    }}
+    .clear-search:hover,
+    .chip:hover {{
+      border-color: #5eead4;
+    }}
     .table-wrap {{
       overflow-x: auto;
       background: var(--panel);
@@ -420,6 +430,7 @@ def html_page(title: str, body: str) -> str:
 <script>
 (() => {{
   const search = document.getElementById('searchBox');
+  const clearSearch = document.getElementById('clearSearch');
   const rows = Array.from(document.querySelectorAll('tbody tr[data-signal]'));
   const chips = Array.from(document.querySelectorAll('.chip[data-filter]'));
   const empty = document.getElementById('emptyState');
@@ -439,6 +450,13 @@ def html_page(title: str, body: str) -> str:
   }}
 
   search?.addEventListener('input', applyFilters);
+  clearSearch?.addEventListener('click', () => {{
+    if (search) {{
+      search.value = '';
+      search.focus();
+    }}
+    applyFilters();
+  }});
   chips.forEach((chip) => {{
     chip.addEventListener('click', () => {{
       activeFilter = chip.dataset.filter || 'all';

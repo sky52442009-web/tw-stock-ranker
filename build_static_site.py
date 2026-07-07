@@ -153,6 +153,7 @@ def render_static_index(csv_path: Path, limit: int) -> str:
             <span>搜尋</span>
             <input id="searchBox" type="search" placeholder="代號、名稱、產業" autocomplete="off" />
           </label>
+          <button id="clearSearch" class="clear-search" type="button">清除</button>
           <div class="chips" role="group" aria-label="訊號篩選">
             <button class="chip active" type="button" data-filter="all">全部</button>
             <button class="chip" type="button" data-filter="偏多">偏多</button>

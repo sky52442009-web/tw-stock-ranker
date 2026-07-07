@@ -172,6 +172,16 @@
       background: #d1fae5;
       border-color: #5eead4;
     }
+    .clear-search {
+      color: #374151;
+      background: #fff;
+      border-color: var(--line);
+      padding: 8px 10px;
+    }
+    .clear-search:hover,
+    .chip:hover {
+      border-color: #5eead4;
+    }
     .table-wrap {
       overflow-x: auto;
       background: var(--panel);
@@ -276,6 +286,7 @@
             <span>搜尋</span>
             <input id="searchBox" type="search" placeholder="代號、名稱、產業" autocomplete="off" />
           </label>
+          <button id="clearSearch" class="clear-search" type="button">清除</button>
           <div class="chips" role="group" aria-label="訊號篩選">
             <button class="chip active" type="button" data-filter="all">全部</button>
             <button class="chip" type="button" data-filter="偏多">偏多</button>
@@ -309,6 +320,7 @@
 <script>
 (() => {
   const search = document.getElementById('searchBox');
+  const clearSearch = document.getElementById('clearSearch');
   const rows = Array.from(document.querySelectorAll('tbody tr[data-signal]'));
   const chips = Array.from(document.querySelectorAll('.chip[data-filter]'));
   const empty = document.getElementById('emptyState');
@@ -328,6 +340,13 @@
   }
 
   search?.addEventListener('input', applyFilters);
+  clearSearch?.addEventListener('click', () => {
+    if (search) {
+      search.value = '';
+      search.focus();
+    }
+    applyFilters();
+  });
   chips.forEach((chip) => {
     chip.addEventListener('click', () => {
       activeFilter = chip.dataset.filter || 'all';

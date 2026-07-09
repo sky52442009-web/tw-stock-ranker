@@ -121,6 +121,71 @@
       background: #fffbeb;
       border-color: #fde68a;
     }
+    .performance-panel {
+      margin-bottom: 20px;
+      padding: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .performance-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+    .performance-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .perf-stats {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .perf-stat {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+    .perf-stat span,
+    .perf-stat small {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .perf-stat strong {
+      display: block;
+      margin: 4px 0;
+      font-size: 21px;
+      line-height: 1.1;
+    }
+    .perf-table {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .perf-table table {
+      min-width: 820px;
+      font-size: 13px;
+    }
+    mark.result {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+    mark.result.win {
+      background: #dcfce7;
+      color: #166534;
+    }
+    mark.result.loss {
+      background: #fee2e2;
+      color: #991b1b;
+    }
     .table-head {
       display: flex;
       justify-content: space-between;
@@ -243,6 +308,9 @@
       .summary { grid-template-columns: 1fr 1fr; }
       .insight-panel { grid-template-columns: 1fr; }
       .mini-stats { grid-template-columns: 1fr 1fr; }
+      .performance-head { display: block; }
+      .performance-links { justify-content: flex-start; margin-top: 12px; }
+      .perf-stats { grid-template-columns: 1fr 1fr; }
       .table-head { align-items: stretch; flex-direction: column; }
       .tools { justify-content: flex-start; }
     }
@@ -259,6 +327,7 @@
       <nav>
         <a href="download.csv">下載 CSV</a>
         <a href="report.md">Markdown 報告</a>
+        <a href="prediction-log.csv">勝負紀錄</a>
         <a href="health.json">狀態</a>
       </nav>
     </header>
@@ -278,6 +347,41 @@
         </div>
         <div class="mini-stats"><div class='mini-stat good'><span>最高分</span><strong>78.48</strong></div><div class='mini-stat good'><span>偏多</span><strong>4</strong></div><div class='mini-stat watch'><span>觀察偏多</span><strong>17</strong></div><div class='mini-stat '><span>中性觀察</span><strong>68</strong></div></div>
       </section>
+
+
+      <section class="performance-panel">
+        <div class="performance-head">
+          <div>
+            <h2>預測勝負統計</h2>
+            <p class="small">勝負定義：預測日收盤到下一個交易日收盤，上漲為勝、下跌為負、平盤為平。</p>
+          </div>
+          <div class="performance-links">
+            <a href="prediction-log.csv">完整紀錄 CSV</a>
+            <a href="performance.json">統計 JSON</a>
+          </div>
+        </div>
+        <div class="perf-stats"><div class='perf-stat'><span>Top1 勝率</span><strong>0.0%</strong><small>2 筆已結算</small></div><div class='perf-stat'><span>Top3 勝率</span><strong>33.3%</strong><small>2 勝 / 4 負</small></div><div class='perf-stat'><span>Top10 勝率</span><strong>20.0%</strong><small>20 筆已結算</small></div><div class='perf-stat'><span>Top10 平均報酬</span><strong>-3.59%</strong><small>收盤到隔日收盤</small></div><div class='perf-stat'><span>Top30 勝率</span><strong>21.7%</strong><small>60 筆已結算</small></div><div class='perf-stat'><span>待結算</span><strong>100</strong><small>等待下一個交易日收盤</small></div></div>
+
+        <div class="perf-table">
+          <table>
+            <thead>
+              <tr>
+                <th>預測日</th>
+                <th>結算日</th>
+                <th>Top1</th>
+                <th>勝負</th>
+                <th>Top1 報酬</th>
+                <th>Top3 勝率</th>
+                <th>Top10 勝率</th>
+                <th>Top10 均報酬</th>
+              </tr>
+            </thead>
+            <tbody><tr><td>2026-07-06</td><td>2026-07-07</td><td>8096 擎亞</td><td><mark class='result loss'>loss</mark></td><td class='num'>-7.76%</td><td class='num'>33.3%</td><td class='num'>10.0%</td><td class='num'>-5.26%</td></tr><tr><td>2026-06-30</td><td>2026-07-01</td><td>2458 義隆</td><td><mark class='result loss'>loss</mark></td><td class='num'>-3.97%</td><td class='num'>33.3%</td><td class='num'>30.0%</td><td class='num'>-1.93%</td></tr></tbody>
+          </table>
+        </div>
+
+      </section>
+
 
       <div class="table-head">
         <h2>候選清單</h2>
@@ -316,7 +420,7 @@
       </div>
       <p class="note">這是量化候選排行，不是投資建議。實盤前請確認重大訊息、注意/處置、可當沖資格、券源、流動性與停損規則。</p>
     </main>
-    
+
 <script>
 (() => {
   const search = document.getElementById('searchBox');

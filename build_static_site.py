@@ -13,6 +13,9 @@ from serve_ranker import find_latest_csv, html_page, load_rows, report_date_from
 ROOT = Path(__file__).resolve().parent
 OUTPUTS = ROOT / "outputs"
 SITE = ROOT / "site"
+DATA = ROOT / "data"
+PREDICTION_LOG = DATA / "prediction_log.csv"
+PREDICTION_SUMMARY = DATA / "prediction_summary.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,11 +67,131 @@ def next_business_day(value: str) -> str:
             return nxt.isoformat()
 
 
+def load_performance_summary() -> dict[str, object] | None:
+    if not PREDICTION_SUMMARY.exists():
+        return None
+    try:
+        return json.loads(PREDICTION_SUMMARY.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def format_rate(value: object) -> str:
+    number = parse_float(None if value is None else str(value))
+    return "尚無" if number is None else f"{number * 100:.1f}%"
+
+
+def format_signed_percent(value: object) -> str:
+    number = parse_float(None if value is None else str(value))
+    if number is None:
+        return "尚無"
+    return f"{number * 100:+.2f}%"
+
+
+def render_performance_panel(summary: dict[str, object] | None) -> str:
+    if not summary:
+        return """
+      <section class="performance-panel">
+        <div class="performance-head">
+          <div>
+            <h2>預測勝負統計</h2>
+            <p class="small">尚未累積可結算資料；每天盤後更新後會自動記錄並等待隔日收盤結算。</p>
+          </div>
+        </div>
+      </section>
+        """
+
+    buckets = summary.get("buckets", {}) if isinstance(summary.get("buckets"), dict) else {}
+    top1 = buckets.get("top_1", {}) if isinstance(buckets.get("top_1"), dict) else {}
+    top3 = buckets.get("top_3", {}) if isinstance(buckets.get("top_3"), dict) else {}
+    top10 = buckets.get("top_10", {}) if isinstance(buckets.get("top_10"), dict) else {}
+    top30 = buckets.get("top_30", {}) if isinstance(buckets.get("top_30"), dict) else {}
+    pending = summary.get("pending", 0)
+
+    def stat(label: str, value: str, hint: str = "") -> str:
+        return (
+            "<div class='perf-stat'>"
+            f"<span>{esc(label)}</span><strong>{esc(value)}</strong>"
+            f"<small>{esc(hint)}</small>"
+            "</div>"
+        )
+
+    stats = "".join(
+        [
+            stat("Top1 勝率", format_rate(top1.get("win_rate")), f"{top1.get('settled', 0)} 筆已結算"),
+            stat("Top3 勝率", format_rate(top3.get("win_rate")), f"{top3.get('wins', 0)} 勝 / {top3.get('losses', 0)} 負"),
+            stat("Top10 勝率", format_rate(top10.get("win_rate")), f"{top10.get('settled', 0)} 筆已結算"),
+            stat("Top10 平均報酬", format_signed_percent(top10.get("avg_close_return")), "收盤到隔日收盤"),
+            stat("Top30 勝率", format_rate(top30.get("win_rate")), f"{top30.get('settled', 0)} 筆已結算"),
+            stat("待結算", str(pending), "等待下一個交易日收盤"),
+        ]
+    )
+
+    daily_rows = []
+    for item in (summary.get("recent_daily") or [])[:8]:
+        if not isinstance(item, dict):
+            continue
+        result = item.get("top1_result", "")
+        result_class = "win" if result == "win" else "loss" if result == "loss" else "tie"
+        daily_rows.append(
+            "<tr>"
+            f"<td>{esc(item.get('prediction_date', ''))}</td>"
+            f"<td>{esc(item.get('settled_date', ''))}</td>"
+            f"<td>{esc(item.get('top1_stock', ''))}</td>"
+            f"<td><mark class='result {result_class}'>{esc(result or '尚無')}</mark></td>"
+            f"<td class='num'>{esc(format_signed_percent(item.get('top1_return')))}</td>"
+            f"<td class='num'>{esc(format_rate(item.get('top3_win_rate')))}</td>"
+            f"<td class='num'>{esc(format_rate(item.get('top10_win_rate')))}</td>"
+            f"<td class='num'>{esc(format_signed_percent(item.get('top10_avg_return')))}</td>"
+            "</tr>"
+        )
+
+    daily_table = ""
+    if daily_rows:
+        daily_table = f"""
+        <div class="perf-table">
+          <table>
+            <thead>
+              <tr>
+                <th>預測日</th>
+                <th>結算日</th>
+                <th>Top1</th>
+                <th>勝負</th>
+                <th>Top1 報酬</th>
+                <th>Top3 勝率</th>
+                <th>Top10 勝率</th>
+                <th>Top10 均報酬</th>
+              </tr>
+            </thead>
+            <tbody>{''.join(daily_rows)}</tbody>
+          </table>
+        </div>
+        """
+
+    return f"""
+      <section class="performance-panel">
+        <div class="performance-head">
+          <div>
+            <h2>預測勝負統計</h2>
+            <p class="small">勝負定義：預測日收盤到下一個交易日收盤，上漲為勝、下跌為負、平盤為平。</p>
+          </div>
+          <div class="performance-links">
+            <a href="prediction-log.csv">完整紀錄 CSV</a>
+            <a href="performance.json">統計 JSON</a>
+          </div>
+        </div>
+        <div class="perf-stats">{stats}</div>
+        {daily_table}
+      </section>
+    """
+
+
 def render_static_index(csv_path: Path, limit: int) -> str:
     rows = load_rows(csv_path, limit)
     report_date = report_date_from_path(csv_path)
     target_date = next_business_day(report_date)
     updated = datetime.fromtimestamp(csv_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+    performance_panel = render_performance_panel(load_performance_summary())
     signal_counts: dict[str, int] = {}
     for row in rows:
         signal = row.get("signal", "") or "未分類"
@@ -126,6 +249,7 @@ def render_static_index(csv_path: Path, limit: int) -> str:
       <nav>
         <a href="download.csv">下載 CSV</a>
         <a href="report.md">Markdown 報告</a>
+        <a href="prediction-log.csv">勝負紀錄</a>
         <a href="health.json">狀態</a>
       </nav>
     </header>
@@ -145,6 +269,8 @@ def render_static_index(csv_path: Path, limit: int) -> str:
         </div>
         <div class="mini-stats">{stats}</div>
       </section>
+
+      {performance_panel}
 
       <div class="table-head">
         <h2>候選清單</h2>
@@ -196,12 +322,19 @@ def build_site(site_dir: Path, limit: int) -> tuple[Path, str]:
     report_date = report_date_from_path(csv_path)
     md_path = csv_path.with_suffix(".md")
 
-    (site_dir / "index.html").write_text(render_static_index(csv_path, limit), encoding="utf-8")
+    index_html = "\n".join(line.rstrip() for line in render_static_index(csv_path, limit).splitlines()) + "\n"
+    (site_dir / "index.html").write_text(index_html, encoding="utf-8")
     shutil.copy2(csv_path, site_dir / "download.csv")
     if md_path.exists():
         shutil.copy2(md_path, site_dir / "report.md")
     else:
         (site_dir / "report.md").write_text(f"# 台股隔日上漲候選排行\n\n資料日：{report_date}\n", encoding="utf-8")
+
+    performance = load_performance_summary()
+    if PREDICTION_LOG.exists():
+        shutil.copy2(PREDICTION_LOG, site_dir / "prediction-log.csv")
+    if PREDICTION_SUMMARY.exists():
+        shutil.copy2(PREDICTION_SUMMARY, site_dir / "performance.json")
 
     health = {
         "ok": True,
@@ -211,6 +344,17 @@ def build_site(site_dir: Path, limit: int) -> tuple[Path, str]:
         "built_at": datetime.now().isoformat(timespec="seconds"),
         "auto_update": "GitHub Actions weekdays at 19:10, 20:10, 21:30, 22:30 Asia/Taipei",
     }
+    if performance:
+        buckets = performance.get("buckets", {}) if isinstance(performance.get("buckets"), dict) else {}
+        top10 = buckets.get("top_10", {}) if isinstance(buckets.get("top_10"), dict) else {}
+        health.update(
+            {
+                "prediction_rows": performance.get("rows", 0),
+                "prediction_pending": performance.get("pending", 0),
+                "prediction_top10_settled": top10.get("settled", 0),
+                "prediction_top10_win_rate": top10.get("win_rate"),
+            }
+        )
     (site_dir / "health.json").write_text(json.dumps(health, ensure_ascii=False, indent=2), encoding="utf-8")
 
     # Makes GitHub Pages serve files as-is even if Jekyll is enabled.

@@ -16,7 +16,7 @@ on:
     - cron: "30 14 * * 1-5"
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -54,11 +54,26 @@ jobs:
       - name: Build latest ranking
         run: python tw_stock_ranker.py --end-date "$TPE_DATE" --lookback-days 110 --top 100 --output-dir outputs --cache-dir data/cache
 
+      - name: Update prediction win-loss history
+        run: python track_prediction_results.py --ranking-dir outputs --history-file data/prediction_log.csv --summary-file data/prediction_summary.json --cache-dir data/cache --end-date "$TPE_DATE" --max-rank 100
+
       - name: Build static site
         run: python build_static_site.py --limit 100 --site-dir site
 
       - name: Show generated health
         run: cat site/health.json
+
+      - name: Commit prediction history
+        run: |
+          if [ -n "$(git status --porcelain data/prediction_log.csv)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/prediction_log.csv data/prediction_summary.json
+            git commit -m "Update prediction win-loss history [skip ci]"
+            git push
+          else
+            echo "Prediction history unchanged."
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

@@ -3,6 +3,10 @@
   "latest_csv": "tw_nextday_rank_20260707.csv",
   "report_date": "2026-07-07",
   "target_date": "2026-07-08",
-  "built_at": "2026-07-08T00:05:24",
-  "auto_update": "GitHub Actions weekdays at 19:10, 20:10, 21:30, 22:30 Asia/Taipei"
+  "built_at": "2026-07-10T00:19:57",
+  "auto_update": "GitHub Actions weekdays at 19:10, 20:10, 21:30, 22:30 Asia/Taipei",
+  "prediction_rows": 300,
+  "prediction_pending": 100,
+  "prediction_top10_settled": 20,
+  "prediction_top10_win_rate": 0.2
 }

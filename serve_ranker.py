@@ -298,6 +298,71 @@ def html_page(title: str, body: str) -> str:
       background: #fffbeb;
       border-color: #fde68a;
     }}
+    .performance-panel {{
+      margin-bottom: 20px;
+      padding: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }}
+    .performance-head {{
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 14px;
+    }}
+    .performance-links {{
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }}
+    .perf-stats {{
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }}
+    .perf-stat {{
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f9fafb;
+    }}
+    .perf-stat span,
+    .perf-stat small {{
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }}
+    .perf-stat strong {{
+      display: block;
+      margin: 4px 0;
+      font-size: 21px;
+      line-height: 1.1;
+    }}
+    .perf-table {{
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }}
+    .perf-table table {{
+      min-width: 820px;
+      font-size: 13px;
+    }}
+    mark.result {{
+      background: #eef2ff;
+      color: #3730a3;
+    }}
+    mark.result.win {{
+      background: #dcfce7;
+      color: #166534;
+    }}
+    mark.result.loss {{
+      background: #fee2e2;
+      color: #991b1b;
+    }}
     .table-head {{
       display: flex;
       justify-content: space-between;
@@ -420,6 +485,9 @@ def html_page(title: str, body: str) -> str:
       .summary {{ grid-template-columns: 1fr 1fr; }}
       .insight-panel {{ grid-template-columns: 1fr; }}
       .mini-stats {{ grid-template-columns: 1fr 1fr; }}
+      .performance-head {{ display: block; }}
+      .performance-links {{ justify-content: flex-start; margin-top: 12px; }}
+      .perf-stats {{ grid-template-columns: 1fr 1fr; }}
       .table-head {{ align-items: stretch; flex-direction: column; }}
       .tools {{ justify-content: flex-start; }}
     }}

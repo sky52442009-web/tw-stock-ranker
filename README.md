@@ -21,6 +21,23 @@ python tw_stock_ranker.py --end-date 2026-06-30 --top 30
 - `outputs/tw_nextday_rank_YYYYMMDD.csv`
 - `outputs/tw_nextday_rank_YYYYMMDD.md`
 
+## 每日勝負統計
+
+網站會用 `data/prediction_log.csv` 長期保存每日預測紀錄。勝負定義為「預測日收盤價」到「下一個交易日收盤價」：
+
+- `win`：隔日收盤上漲
+- `loss`：隔日收盤下跌
+- `tie`：隔日收盤平盤
+- `pending`：尚未等到下一個交易日收盤資料
+
+手動更新統計：
+
+```bash
+python track_prediction_results.py --ranking-dir outputs --history-file data/prediction_log.csv --summary-file data/prediction_summary.json --cache-dir data/cache --end-date 2026-07-07
+```
+
+GitHub Actions 會在每天盤後產生新排行後自動執行這一步，並把 `data/prediction_log.csv` 與 `data/prediction_summary.json` commit 回 repo，讓公開網站持續累積 Top1、Top3、Top10、Top30 勝率與平均報酬。
+
 ## 每天盤後執行
 
 ```bash

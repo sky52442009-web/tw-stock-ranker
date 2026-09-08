@@ -1,84 +1,95 @@
 {
-  "updated_at": "2026-09-07T17:43:45+00:00",
+  "updated_at": "2026-09-08T15:04:26+00:00",
   "max_rank": 100,
-  "rows": 4500,
+  "rows": 4600,
   "pending": 100,
   "missing": 13,
   "buckets": {
     "top_1": {
       "rank_limit": 1,
-      "settled": 44,
+      "settled": 45,
       "pending": 1,
       "wins": 19,
-      "losses": 23,
+      "losses": 24,
       "ties": 2,
-      "win_rate": 0.431818,
-      "avg_close_return": -0.002011,
+      "win_rate": 0.422222,
+      "avg_close_return": -0.004188,
       "best_close_return": 0.099338,
-      "worst_close_return": -0.097959
+      "worst_close_return": -0.1
     },
     "top_3": {
       "rank_limit": 3,
-      "settled": 132,
+      "settled": 135,
       "pending": 3,
       "wins": 59,
-      "losses": 69,
+      "losses": 72,
       "ties": 4,
-      "win_rate": 0.44697,
-      "avg_close_return": -0.004464,
+      "win_rate": 0.437037,
+      "avg_close_return": -0.005292,
       "best_close_return": 0.1,
-      "worst_close_return": -0.099631
+      "worst_close_return": -0.1
     },
     "top_5": {
       "rank_limit": 5,
-      "settled": 220,
+      "settled": 225,
       "pending": 5,
       "wins": 97,
-      "losses": 117,
+      "losses": 122,
       "ties": 6,
-      "win_rate": 0.440909,
-      "avg_close_return": -0.003195,
+      "win_rate": 0.431111,
+      "avg_close_return": -0.003856,
       "best_close_return": 0.1,
-      "worst_close_return": -0.099631
+      "worst_close_return": -0.1
     },
     "top_10": {
       "rank_limit": 10,
-      "settled": 440,
+      "settled": 450,
       "pending": 10,
-      "wins": 179,
-      "losses": 248,
+      "wins": 181,
+      "losses": 256,
       "ties": 13,
-      "win_rate": 0.406818,
-      "avg_close_return": -0.005222,
+      "win_rate": 0.402222,
+      "avg_close_return": -0.005594,
       "best_close_return": 0.1,
       "worst_close_return": -0.1
     },
     "top_30": {
       "rank_limit": 30,
-      "settled": 1319,
+      "settled": 1349,
       "pending": 30,
-      "wins": 571,
-      "losses": 706,
+      "wins": 581,
+      "losses": 726,
       "ties": 42,
-      "win_rate": 0.432904,
-      "avg_close_return": -0.003151,
+      "win_rate": 0.430689,
+      "avg_close_return": -0.003436,
       "best_close_return": 0.1,
       "worst_close_return": -0.137454
     },
     "top_100": {
       "rank_limit": 100,
-      "settled": 4387,
+      "settled": 4487,
       "pending": 100,
-      "wins": 1914,
-      "losses": 2309,
-      "ties": 164,
-      "win_rate": 0.436289,
-      "avg_close_return": -0.001758,
+      "wins": 1945,
+      "losses": 2375,
+      "ties": 167,
+      "win_rate": 0.433474,
+      "avg_close_return": -0.002001,
       "best_close_return": 0.1,
       "worst_close_return": -0.665385
     }
   },
   "recent_daily": [
+    {
+      "prediction_date": "2026-09-07",
+      "settled_date": "2026-09-08",
+      "top1_stock": "7711 永擎",
+      "top1_result": "loss",
+      "top1_return": -0.1,
+      "top3_win_rate": 0.0,
+      "top10_win_rate": 0.2,
+      "top10_avg_return": -0.021982,
+      "top10_settled": 10
+    },
     {
       "prediction_date": "2026-09-04",
       "settled_date": "2026-09-07",
@@ -286,17 +297,6 @@
       "top3_win_rate": 0.333333,
       "top10_win_rate": 0.6,
       "top10_avg_return": 0.007593,
-      "top10_settled": 10
-    },
-    {
-      "prediction_date": "2026-08-10",
-      "settled_date": "2026-08-11",
-      "top1_stock": "2603 長榮",
-      "top1_result": "win",
-      "top1_return": 0.018692,
-      "top3_win_rate": 0.666667,
-      "top10_win_rate": 0.2,
-      "top10_avg_return": -0.02605,
       "top10_settled": 10
     }
   ]
